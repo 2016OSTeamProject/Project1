@@ -12,7 +12,7 @@
 #define NUM_WRITES 200
 
 
-#define SEMTYPE             // comment out to use all pthread_mutex_t and no sem_t
+//#define SEMTYPE             // comment out to use all pthread_mutex_t and no sem_t
                             // leave uncommented to use combination of pthread_mutex_t and sem_t
 
 int readerCount;                        // number of threads reading or wanting to read
@@ -55,7 +55,7 @@ void* writerCode(void* a)
 #endif
         sharedBuffer = sharedBuffer + 1;
         
-        printf("Writer is on iteration %d. The new buffer value is %d. The readerCount is %d\n\n", count + 1, sharedBuffer, readerCount);
+        printf("Writer is on iteration %d. The new buffer value is %d. The readerCount is %d\n", count + 1, sharedBuffer, readerCount);
         
         isWriterWaiting = 0;
         pthread_cond_broadcast(&readerWait);
@@ -66,7 +66,7 @@ void* writerCode(void* a)
 #else
         pthread_mutex_unlock(&bufferMutex);
 #endif
-        nanosleep(&ts, NULL);   // leave uncommented to enable thread snoozing
+ //       nanosleep(&ts, NULL);   // leave uncommented to enable thread snoozing
     }
     
     pthread_exit(0);
@@ -104,7 +104,7 @@ void* readerCode(void* a)
         
         pthread_mutex_unlock(&readerCountMutex);
         
-        printf("Reader %d is on iteration %d. The current buffer value is %d. The readerCount is %d.\n\n",
+        printf("Reader %d is on iteration %d. The current buffer value is %d. The readerCount is %d.\n",
                argumentValue, count + 1, sharedBuffer, readerCount);
         
         pthread_mutex_lock(&readerCountMutex);
