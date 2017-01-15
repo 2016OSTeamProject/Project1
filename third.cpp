@@ -20,34 +20,48 @@ double density( int k, double mean );
 
 int main() {
 	srand( time( NULL ) );
-	int r = 0, w = -1, produce_r = 0, produce_w = 0, count = 0;
-	double mean_r = 0.5, mean_w = 2, defer_r = 0, defer_w = 0;
+	int r = 0, w = -1, produce_r = 1, produce_w = 0, count = 0;
+	double mean_r = 2, mean_w = 0.5, defer_r = 0, defer_w = 0, temp;
 	string order = "";
 	vector<pthread_t> readers, writers;
 	readers.push_back( 0 );
 	while( order != "exit" ){
 
+		if( r != 0 ){
+			produce_r += (int)times( (double)(rand()%1000)/1000, mean_r );
+		}
 		if ( r >= 0 ){
-			// create and start a reader and check if it was successful
-			pthread_create(&readers[r], NULL, reader, &r);
+			for( ;r < produce_r; r++ ){
+				// create and start a reader and check if it was successful
+				pthread_create(&readers[r], NULL, reader, &r);
 
-			pthread_detach(readers[r]); // ensure that the reader thread is not killed when the main thread completes
-			count++;
+				// ensure that the reader thread is not killed when the main thread completes
+				pthread_detach(readers[r]);
+				count++;
+				sleep( 0.1 );
+			}
 		}
 
+		produce_w += (int)times( (double)(rand()%1000)/1000, mean_w );
+		if( produce_w > 0 ) w++;
 		if ( w >= 0 ){
-			// create and start a write process and check if it was successful
-			pthread_create(&writers[w], NULL, writer, &w);
+			for( ;w < produce_w; w++ ){
+				cout << "YEE" << endl;
+				// create and start a write process and check if it was successful
+				pthread_create(&writers[w], NULL, writer, &w);
 
-			// ensure that the writer thread is not killed when the main thread completes
-			pthread_detach(writers[w]);
-			sleep( rand()%100 );
+				// ensure that the writer thread is not killed when the main thread completes
+				pthread_detach(writers[w]);
+				sleep( 0.1 );
+			}
 		}
 
 		if( count%10 == 0 ){
+			sleep( 1 );
 			cout << "Enter exit to terminate" << endl;
 			cin >> order;
 		}
+
 	}
 
 	pthread_exit(0); // thread safe exit of main thread
@@ -114,5 +128,5 @@ double times( double prob, double mean ) {
 }
 
 double density( int k, double mean ) {
-	return ( double )exp( ( double )k * -1 / mean ) / mean;
+	return ( double )exp( ( double )k*-1 / mean ) / mean;
 }
