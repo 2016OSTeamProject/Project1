@@ -20,8 +20,8 @@ double density( int k, double mean );
 
 int main() {
 	srand( time( NULL ) );
-	int r = 0, w = -1, produce_r = 1, produce_w = 0, count = 0;
-	double mean_r = 2, mean_w = 0.5, defer_r = 0, defer_w = 0, temp;
+	int r = 0, w = -1, produce_r = 1, produce_w = 0, count = 0, temp;
+	double mean_r = 2, mean_w = 1, defer_r = 0, defer_w = 0;
 	string order = "";
 	vector<pthread_t> readers, writers;
 	readers.push_back( 0 );
@@ -30,6 +30,7 @@ int main() {
 		if( r != 0 ){
 			produce_r += (int)times( (double)(rand()%1000)/1000, mean_r );
 		}
+		for( int a = r; a < produce_r; a++ ) readers.push_back( a );
 		if ( r >= 0 ){
 			for( ;r < produce_r; r++ ){
 				// create and start a reader and check if it was successful
@@ -38,29 +39,32 @@ int main() {
 				// ensure that the reader thread is not killed when the main thread completes
 				pthread_detach(readers[r]);
 				count++;
-				sleep( 0.1 );
+				if( count%10 == 0 ){
+					cout << "Enter exit to terminate" << endl;
+					cin >> order;
+				}
 			}
 		}
 
 		produce_w += (int)times( (double)(rand()%1000)/1000, mean_w );
-		if( produce_w > 0 ) w++;
+		if( produce_w > 0 && w < 0 ) w++;
+		for( int a = w; a < produce_w; a++ ) writers.push_back( a );
 		if ( w >= 0 ){
 			for( ;w < produce_w; w++ ){
-				cout << "YEE" << endl;
 				// create and start a write process and check if it was successful
 				pthread_create(&writers[w], NULL, writer, &w);
 
 				// ensure that the writer thread is not killed when the main thread completes
 				pthread_detach(writers[w]);
-				sleep( 0.1 );
+				count++;
+				if( count%10 == 0 ){
+					cout << "Enter exit to terminate" << endl;
+					cin >> order;
+				}
 			}
 		}
 
-		if( count%10 == 0 ){
-			sleep( 1 );
-			cout << "Enter exit to terminate" << endl;
-			cin >> order;
-		}
+		sleep( 1 );
 
 	}
 
@@ -68,6 +72,7 @@ int main() {
 }
 
 void *reader(void *process_number) {
+	int *number = (int*) process_number;
 	// acquire the lock
 	pthread_mutex_lock(&lock_mutex);
 
@@ -79,8 +84,8 @@ void *reader(void *process_number) {
 	pthread_mutex_unlock(&lock_mutex); // release the lock
 
 	// simulate reading of resource
-	printf("Reader #%d readed\n", process_number);
-	printf("Reader #%d exited\n", process_number);
+	printf("Reader #%d readed\n", *number);
+	printf("Reader #%d exited\n", *number);
 
 	pthread_mutex_lock(&lock_mutex); // acquire the lock
 
@@ -97,13 +102,14 @@ void *reader(void *process_number) {
 }
 
 void *writer(void *process_number) {
-	printf("Writer #%d waiting\n", process_number);
+	int *number = (int*) process_number;
+	printf("Writer #%d waiting\n", *number);
 
 	pthread_mutex_lock(&read_write_mutex); // acquire the read write lock
 
 	// simulate writing to resource
-	printf("Writer #%d updated\n", process_number);
-	printf("Writer #%d exited\n", process_number);
+	printf("Writer #%d updated\n", *number);
+	printf("Writer #%d exited\n", *number);
 
 	pthread_mutex_unlock(&read_write_mutex); // release the read write lock
 
