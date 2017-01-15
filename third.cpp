@@ -13,13 +13,15 @@ pthread_mutex_t read_write_mutex, lock_mutex;
 
 void *reader(void *process_number);
 void *writer(void *process_number);
-//double poisson( int k, double mean );
+double poisson( int k, double mean );
 double exponential( int k, double mean );
+double times( double prob, double mean );
+double density( int k, double mean );
 
 int main() {
 	srand( time( NULL ) );
 	int r = 0, w = -1, produce_r = 0, produce_w = 0, count = 0;
-	double mean_r = 0.1, mean_w = 10, defer_r = 0, defer_w = 0;
+	double mean_r = 0.5, mean_w = 2, defer_r = 0, defer_w = 0;
 	string order = "";
 	vector<pthread_t> readers, writers;
 	readers.push_back( 0 );
@@ -33,13 +35,13 @@ int main() {
 			count++;
 		}
 
-
 		if ( w >= 0 ){
 			// create and start a write process and check if it was successful
 			pthread_create(&writers[w], NULL, writer, &w);
 
 			// ensure that the writer thread is not killed when the main thread completes
 			pthread_detach(writers[w]);
+			sleep( rand()%100 );
 		}
 
 		if( count%10 == 0 ){
@@ -96,13 +98,21 @@ void *writer(void *process_number) {
 	return NULL;
 }
 
-/*double poisson( int k, double mean ) {
-  double p = exp(-mean);
-  p *= pow( mean, ( double )k );
-  for ( int i=0 ; i<k ; i++ ) p /= (i+1);
-  return p;
-  }*/
+double poisson( int k, double mean ) {
+	double p = exp(-mean);
+	p *= pow( mean, ( double )k );
+	for ( int i=0 ; i<k ; i++ ) p /= (i+1);
+	return p;
+}
 
 double exponential( int k, double mean ) {
 	return mean * exp( (-1) * mean * k );
+}
+
+double times( double prob, double mean ) {
+	return log( ( double )( prob/mean ) ) / ( mean*-1 );
+}
+
+double density( int k, double mean ) {
+	return ( double )exp( ( double )k * -1 / mean ) / mean;
 }
